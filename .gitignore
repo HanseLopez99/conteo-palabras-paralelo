@@ -1,0 +1,6 @@
+secuencial
+paralelo
+*.o
+*.out
+.DS_Store
+*~

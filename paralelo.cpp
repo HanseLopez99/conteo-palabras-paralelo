@@ -13,6 +13,7 @@
 #include <cctype>
 #include <thread>
 #include <chrono>
+#include <limits>
 
 std::string normalizar(const std::string& palabra) {
     std::string resultado;
@@ -64,11 +65,27 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    unsigned int numHilos = (argc >= 3)
-        ? static_cast<unsigned int>(std::stoi(argv[2]))
-        : std::max(2u, std::thread::hardware_concurrency());
-
-    auto inicio = std::chrono::high_resolution_clock::now();
+    unsigned int numHilos = 0;
+    try {
+        if (argc >= 3) {
+            std::size_t caracteresLeidos = 0;
+            unsigned long valor = std::stoul(argv[2], &caracteresLeidos);
+            if (caracteresLeidos != std::string(argv[2]).size()
+                    || valor > std::numeric_limits<unsigned int>::max()) {
+                throw std::invalid_argument("valor fuera de rango");
+            }
+            numHilos = static_cast<unsigned int>(valor);
+        } else {
+            numHilos = std::max(2u, std::thread::hardware_concurrency());
+        }
+    } catch (const std::exception&) {
+        std::cerr << "El numero de hilos debe ser un entero positivo.\n";
+        return 1;
+    }
+    if (numHilos == 0) {
+        std::cerr << "El numero de hilos debe ser mayor que cero.\n";
+        return 1;
+    }
 
     // 1. Leer archivo + 2. Dividir en lista de palabras (igual que la version secuencial)
     std::vector<std::string> palabras = leerYDividir(argv[1]);
@@ -78,6 +95,10 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     if (numHilos > palabras.size()) numHilos = static_cast<unsigned int>(palabras.size());
+
+    // Mismo punto inicial que en secuencial: palabras ya leidas y normalizadas.
+    // El intervalo incluye fork, join y reduce porque son parte del costo paralelo.
+    auto inicio = std::chrono::steady_clock::now();
 
     // 3. Dividir la lista en N sublistas (rangos), un mapa local por hilo
     std::vector<std::unordered_map<std::string, int>> mapasLocales(numHilos);
@@ -112,7 +133,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    auto fin = std::chrono::high_resolution_clock::now();
+    auto fin = std::chrono::steady_clock::now();
     double ms = std::chrono::duration<double, std::milli>(fin - inicio).count();
 
     // 5. Mostrar resultado final (mismo orden que la version secuencial, para comparar)
@@ -126,7 +147,8 @@ int main(int argc, char* argv[]) {
     std::cerr << "\n[paralelo] hilos: " << numHilos
               << " | palabras totales: " << palabras.size()
               << " | palabras distintas: " << frecuencias.size()
-              << " | tiempo: " << ms << " ms\n";
+              << " | tiempo_conteo: " << ms << " ms\n"
+              << "TIEMPO_MS=" << ms << "\n";
 
     return 0;
 }

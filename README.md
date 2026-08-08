@@ -31,19 +31,30 @@ g++ -O2 -std=c++17 -pthread paralelo.cpp -o paralelo
 ./paralelo archivo.txt 4
 ```
 
+El valor `TIEMPO_MS` mide únicamente el conteo. La lectura, normalización y
+presentación se excluyen en ambas versiones. En la versión paralela sí se
+incluyen la creación y unión de hilos y la combinación de mapas, pues forman
+parte del costo necesario para producir el resultado final.
+
+## Experimento de rendimiento (5 ejecuciones)
+
+```bash
+chmod +x benchmark.sh
+./benchmark.sh grande.txt
+```
+
+El script compila con optimización, realiza cinco pruebas secuenciales, cinco
+con 2 hilos y cinco con 4 hilos usando el mismo archivo. Genera
+`resultados.md` con los tiempos, promedios, speedup, efficiency y los elementos
+para responder el análisis solicitado.
+
+Las fórmulas utilizadas son:
+
+- `Speedup(p) = tiempo secuencial / tiempo paralelo(p)`
+- `Efficiency(p) = Speedup(p) / p`
+
 ## Resultados
 
-Archivo de prueba: `grande.txt` (~300,000 palabras, 40 palabras distintas).
-
-| Versión | Hilos | Tiempo |
-|---------|-------|--------|
-| Secuencial | 1 | ~30 ms |
-| Paralelo | 1 | ~33 ms |
-| Paralelo | 2 | ~34 ms |
-| Paralelo | 4 | ~27 ms |
-| Paralelo | 8 | ~27 ms |
-| Paralelo | 16 | ~28 ms |
-
-- Las salidas de ambas versiones son **idénticas**.
-- Con **4+ hilos** la versión paralela supera a la secuencial (~10% más rápida).
-- La mejora es moderada porque el archivo tiene solo 40 palabras distintas (la fase de merge es muy liviana).
+Consulte [`resultados.md`](resultados.md) para ver la ejecución más reciente.
+Los valores dependen del equipo y de la carga que tenga al hacer la prueba, por
+lo que pueden regenerarse con el comando anterior.

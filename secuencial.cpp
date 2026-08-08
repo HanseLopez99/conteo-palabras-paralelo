@@ -54,10 +54,12 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto inicio = std::chrono::high_resolution_clock::now();
-
     // 1. Leer archivo + 2. Dividir en lista de palabras
     std::vector<std::string> palabras = leerYDividir(argv[1]);
+
+    // Se mide solamente el conteo. La lectura, la normalizacion y la impresion
+    // quedan fuera, igual que en la version paralela.
+    auto inicio = std::chrono::steady_clock::now();
 
     // 3. Recorrer palabra por palabra actualizando el mapa de frecuencias
     std::unordered_map<std::string, int> frecuencias;
@@ -65,7 +67,7 @@ int main(int argc, char* argv[]) {
         frecuencias[palabra]++;
     }
 
-    auto fin = std::chrono::high_resolution_clock::now();
+    auto fin = std::chrono::steady_clock::now();
     double ms = std::chrono::duration<double, std::milli>(fin - inicio).count();
 
     // 4. Mostrar resultado final (ordenado alfabeticamente para poder comparar)
@@ -78,7 +80,8 @@ int main(int argc, char* argv[]) {
 
     std::cerr << "\n[secuencial] palabras totales: " << palabras.size()
               << " | palabras distintas: " << frecuencias.size()
-              << " | tiempo: " << ms << " ms\n";
+              << " | tiempo_conteo: " << ms << " ms\n"
+              << "TIEMPO_MS=" << ms << "\n";
 
     return 0;
 }
